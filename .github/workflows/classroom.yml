@@ -1,0 +1,76 @@
+name: GitHub Classroom Workflow
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: AutoGrading
+    runs-on: ubuntu-latest
+    outputs:
+      details: ${{ steps.autograding.outputs.details }}
+      points: ${{ steps.autograding.outputs.points }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          image: tonistiigi/binfmt:qemu-v7.0.0
+          platforms: riscv64
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rust-src, llvm-tools-preview
+          target: riscv64imac-unknown-none-elf
+          override: true
+
+      - name: Install cargo-binutils
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-binutils
+
+      - name: Build and Test
+        run: make ci-test | tee qemu_run_output.txt
+
+      - name: Prepare os-autograding
+        run: |
+          mkdir .github/classroom
+          cp -r conf/autograding .github/classroom
+
+      - name: os-autograding
+        uses: yfblock/os-autograding@master
+        with:
+          outputFile: qemu_run_output.txt
+          scriptPath: .github/classroom
+
+  deploy:
+    name: Deploy to pages
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Autograding Output
+        run: |
+          echo "${{ needs.test.outputs.details }}"
+      - name: 
+        run: |
+          mkdir autograding_logs
+          cd autograding_logs
+          echo -ne "${{ needs.test.outputs.details }}\nPoints: ${{ needs.test.outputs.points }}" >> `date +%Y_%m_%d_%H_%M_%S`.txt
+      - name: GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v3
+        with:
+          target_branch: gh-pages
+          build_dir: autograding_logs
+          keep_history: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
