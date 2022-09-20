@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: AutoGrading
+    name: Autograding
     runs-on: ubuntu-latest
     outputs:
       details: ${{ steps.autograding.outputs.details }}
@@ -24,6 +24,17 @@ jobs:
           image: tonistiigi/binfmt:qemu-v7.0.0
           platforms: riscv64
 
+      - name: Cache Rust dep
+        id: cache-rust
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo
+
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -34,6 +45,7 @@ jobs:
           override: true
 
       - name: Install cargo-binutils
+        if: steps.cache-rust.outputs.cache-hit != 'true'
         uses: actions-rs/cargo@v1
         with:
           command: install
@@ -62,7 +74,7 @@ jobs:
       - name: Test Autograding Output
         run: |
           echo "${{ needs.test.outputs.details }}"
-      - name: 
+      - name: Prepare autograding logs
         run: |
           mkdir autograding_logs
           cd autograding_logs
