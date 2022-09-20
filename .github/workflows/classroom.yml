@@ -45,7 +45,7 @@ jobs:
       - name: Prepare os-autograding
         run: |
           mkdir .github/classroom
-          cp -r conf/autograding .github/classroom
+          cp -r conf/autograding/* .github/classroom
 
       - name: os-autograding
         uses: yfblock/os-autograding@master
