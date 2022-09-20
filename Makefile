@@ -22,8 +22,8 @@ clean-os:
 	rm -rf os
 
 clean-user:
-	git submodule deinit -f -- user
-	rm -rf user
+	git submodule deinit -f -- ci-user
+	rm -rf ci-user
 
 test1: setup
 	cp -r os1 os

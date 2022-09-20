@@ -1,9 +1,6 @@
 [submodule "conf"]
 	path = conf
 	url = git@github.com:duskmoon314/rust-os-camp-2022-conf.git
-[submodule "user"]
-	path = user
-	url = git@github.com:duskmoon314/rust-os-camp-2022-test.git
 [submodule "ci-user"]
 	path = ci-user
 	url = git@github.com:duskmoon314/rust-os-camp-2022-test.git
