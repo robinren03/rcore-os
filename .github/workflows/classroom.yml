@@ -30,7 +30,7 @@ jobs:
           profile: minimal
           toolchain: nightly
           components: rust-src, llvm-tools-preview
-          target: riscv64imac-unknown-none-elf
+          target: riscv64gc-unknown-none-elf
           override: true
 
       - name: Install cargo-binutils
