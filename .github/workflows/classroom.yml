@@ -48,6 +48,7 @@ jobs:
           cp -r conf/autograding/* .github/classroom
 
       - name: os-autograding
+        id: autograding
         uses: yfblock/os-autograding@master
         with:
           outputFile: qemu_run_output.txt
