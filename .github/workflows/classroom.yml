@@ -67,11 +67,11 @@ jobs:
           outputFile: qemu_run_output.txt
           scriptPath: .github/classroom
 
-      - name: Export ENV
-        id: export-env
-        uses: krisalay/export-env@v1.0.0
+      - name: Load ENV
+        id: load-env
+        uses: duskmoon314/action-load-env@v1
         with:
-          filename: .env
+          files: .env
 
   deploy:
     name: Deploy to pages
