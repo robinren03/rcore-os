@@ -13,6 +13,7 @@ jobs:
     outputs:
       details: ${{ steps.autograding.outputs.details }}
       points: ${{ steps.autograding.outputs.points }}
+      finished_lab: ${{ env.FINISHED_LAB }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -66,6 +67,12 @@ jobs:
           outputFile: qemu_run_output.txt
           scriptPath: .github/classroom
 
+      - name: Export ENV
+        id: export-env
+        uses: krisalay/export-env@v1.0.0
+        with:
+          filename: .env
+
   deploy:
     name: Deploy to pages
     needs: test
@@ -88,7 +95,7 @@ jobs:
           FILE_NAME=`date +%Y_%m_%d_%H_%M_%S`.txt
           echo -ne "${{ needs.test.outputs.details }}\n" > $FILE_NAME
           echo -ne "Points: ${{ needs.test.outputs.points }}" > $FILE_NAME
-          cat older.json | jq ".default |= \"$FILE_NAME\"" > latest.json
+          cat older.json | jq ".${{ needs.test.outputs.finished_lab }} |= \"$FILE_NAME\"" > latest.json
           rm older.json
           echo -ne "# Got Points\n" > README.md
           echo "![Points bar](../../blob/gh-pages/points-badge.svg)" >> README.md
