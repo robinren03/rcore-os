@@ -16,8 +16,8 @@ jobs:
       finished_lab: ${{ env.FINISHED_LAB }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+        # with:
+        #   submodules: recursive
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -58,6 +58,7 @@ jobs:
       - name: Prepare os-autograding
         run: |
           mkdir .github/classroom
+          make setup-conf
           cp -r conf/autograding/* .github/classroom
 
       - name: os-autograding

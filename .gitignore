@@ -5,3 +5,7 @@
 # rust
 Cargo.lock
 target/
+
+# sub repo
+ci-user/
+conf/

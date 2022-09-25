@@ -1,8 +1,0 @@
-[submodule "conf"]
-	path = conf
-	url = git@github.com:LearningOS/rust-os-camp-2022-conf.git
-	branch = main
-[submodule "ci-user"]
-	path = ci-user
-	url = git@github.com:LearningOS/rust-os-camp-2022-test.git
-	branch = main
