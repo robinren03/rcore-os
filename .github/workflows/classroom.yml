@@ -25,6 +25,9 @@ jobs:
           image: tonistiigi/binfmt:qemu-v7.0.0
           platforms: riscv64
 
+      - name: Check QEMU
+        run: qemu-system-riscv64 --version
+
       - name: Cache Rust dep
         id: cache-rust
         uses: actions/cache@v3
