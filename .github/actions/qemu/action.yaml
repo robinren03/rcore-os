@@ -1,0 +1,5 @@
+name: 'Exec Qemu'
+description: 'Exec Qemu in docker'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

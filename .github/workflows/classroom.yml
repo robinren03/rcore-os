@@ -19,44 +19,8 @@ jobs:
         # with:
         #   submodules: recursive
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          image: tonistiigi/binfmt:qemu-v7.0.0
-          platforms: riscv64
-
-      - name: Check QEMU
-        run: qemu-system-riscv64 --version
-
-      - name: Cache Rust dep
-        id: cache-rust
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo
-
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          components: rust-src, llvm-tools-preview
-          target: riscv64gc-unknown-none-elf
-          override: true
-
-      - name: Install cargo-binutils
-        if: steps.cache-rust.outputs.cache-hit != 'true'
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-binutils
-
-      - name: Build and Test
-        run: make ci-test | tee qemu_run_output.txt
+      - name: Build and Test in docker
+        uses: ./.github/actions/qemu
 
       - name: Prepare os-autograding
         run: |

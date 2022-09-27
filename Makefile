@@ -4,6 +4,7 @@ export
 HOST_DIR ?= $(shell pwd)
 TEST_REPO ?= https://github.com/LearningOS/rust-os-camp-2022-test.git
 CONF_REPO ?= https://github.com/LearningOS/rust-os-camp-2022-conf.git
+TARGET ?= riscv64gc-unknown-none-elf
 
 test: test3 test4 test5 test6 test7 test8
 
@@ -40,6 +41,13 @@ reset-conf: clean-conf setup-conf
 
 reset: clean-os clean-user clean-conf setup-user setup-conf
 
+env:
+	rustup default nightly
+	(rustup target list | grep "$(TARGET) (installed)") || rustup target add $(TARGET)
+	cargo install cargo-binutils --vers ~0.2
+	rustup component add rust-src
+	rustup component add llvm-tools-preview
+
 test1: clean-os
 	cp -r os1 os
 	cd ci-user && make test CHAPTER=1
@@ -72,7 +80,7 @@ test8: clean-os
 	cp -r os8 os
 	cd ci-user && make test CHAPTER=8
 
-ci-test: setup-user
+ci-test: setup-user env
 	$(MAKE) $(FINISHED_LAB)
 
 docker: setup-conf
