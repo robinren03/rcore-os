@@ -1,0 +1,10 @@
+default:
+  image: duskmoon/dev-env:rcore-ci
+
+stages:
+  - test
+
+test-code-job:
+  stage: test
+  script:
+    - make ci-test
