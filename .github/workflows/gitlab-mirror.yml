@@ -12,7 +12,7 @@ jobs:
     - name: Mirror + trigger CI
       uses: Gallium70/gitlab-mirror-and-ci-action@master
       with:
-        args: "https://git.tsinghua.edu.cn/os-lab/public/rcore-tutorial-code-2022s"
+        args: "https://git.tsinghua.edu.cn/os-lab/public/rcore-tutorial-code-2022a"
       env:
         GITLAB_HOSTNAME: "git.tsinghua.edu.cn"
         GITLAB_PROJECT_ID: "18728"
