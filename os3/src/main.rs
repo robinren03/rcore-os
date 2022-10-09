@@ -61,10 +61,15 @@ pub fn rust_main() -> ! {
     logging::init();
     println!("[kernel] Hello, world!");
     heap_alloc::init_heap();
+    println!("[kernel] Heap Initialized!");
     trap::init();
+    println!("[kernel] Trap Initialized!");
     loader::load_apps();
+    println!("[kernel] App loaded!");
     trap::enable_timer_interrupt();
+    println!("[kernel] Timer enabled!");
     timer::set_next_trigger();
+    println!("[kernel] Trigger set!");
     task::run_first_task();
     panic!("Unreachable in rust_main!");
 }
