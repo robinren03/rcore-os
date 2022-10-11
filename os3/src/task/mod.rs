@@ -82,7 +82,6 @@ impl TaskManager {
     /// Generally, the first task in task list is an idle task (we call it zero process later).
     /// But in ch3, we load apps statically, so the first task is a real app.
     fn run_first_task(&self) -> ! {
-        println!("Entered RFS!");
         let mut inner = self.inner.exclusive_access();
         // println!("Entered RFS! --1");
         let task0 = &mut inner.tasks[0];
@@ -167,7 +166,6 @@ impl TaskManager {
 
 /// Run the first task in task list.
 pub fn run_first_task() {
-    println!("Entered RFS! #");
     TASK_MANAGER.run_first_task();
 }
 
