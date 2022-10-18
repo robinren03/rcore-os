@@ -14,8 +14,11 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
+use crate::config::MAX_SYSCALL_NUM;
 use crate::loader::{get_app_data, get_num_app};
+use crate::mm::{VirtPageNum, MapPermission};
 use crate::sync::UPSafeCell;
+use crate::timer::get_time_us;
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
 use lazy_static::*;
@@ -79,6 +82,8 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let next_task = &mut inner.tasks[0];
         next_task.task_status = TaskStatus::Running;
+        next_task.first_call = false;
+        next_task.first_time = get_time_us();
         let next_task_cx_ptr = &next_task.task_cx as *const TaskContext;
         drop(inner);
         let mut _unused = TaskContext::zero_init();
@@ -134,6 +139,10 @@ impl TaskManager {
             let mut inner = self.inner.exclusive_access();
             let current = inner.current_task;
             inner.tasks[next].task_status = TaskStatus::Running;
+            if inner.tasks[next].first_call {
+                inner.tasks[next].first_call = false;
+                inner.tasks[next].first_time = get_time_us();
+            }
             inner.current_task = next;
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
@@ -146,6 +155,45 @@ impl TaskManager {
         } else {
             panic!("All applications completed!");
         }
+    }
+
+    fn update_cur_task(&self, syscall_id:usize) {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].syscall_times[syscall_id] += 1;
+    }
+
+    fn get_syscall_times(&self)->[u32; MAX_SYSCALL_NUM]{
+        let inner=self.inner.exclusive_access();
+        let current=inner.current_task;
+        inner.tasks[current].syscall_times
+    }
+
+    fn get_first_time(&self)->usize{
+        let inner=self.inner.exclusive_access();
+        let current=inner.current_task;
+        inner.tasks[current].first_time
+    }
+
+
+    fn map(&self, start:VirtPageNum, end:VirtPageNum, permission:MapPermission ) -> bool{
+        let mut inner = self.inner.exclusive_access();
+        let current: usize = inner.current_task;
+        if inner.tasks[current].memory_set.check_before_map(start, end) {
+            inner.tasks[current].memory_set.seq_mem_map(start, end, permission);
+            return true;
+        }
+        false
+    }
+
+    fn unmap(&self, start:VirtPageNum, end:VirtPageNum) -> bool{
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        if inner.tasks[current].memory_set.check_before_unmap(start, end) {
+            inner.tasks[current].memory_set.seq_mem_unmap(start, end);
+            return true;
+        }
+        false
     }
 }
 
@@ -190,4 +238,24 @@ pub fn current_user_token() -> usize {
 /// Get the current 'Running' task's trap contexts.
 pub fn current_trap_cx() -> &'static mut TrapContext {
     TASK_MANAGER.get_current_trap_cx()
+}
+
+pub fn update_cur_task(syscall_id : usize) {
+    TASK_MANAGER.update_cur_task(syscall_id);
+}
+
+pub fn get_syscall_times() -> [u32; MAX_SYSCALL_NUM] {
+    TASK_MANAGER.get_syscall_times()
+}
+
+pub fn get_first_time() -> usize {
+    TASK_MANAGER.get_first_time()
+}
+
+pub fn map(start:VirtPageNum, end:VirtPageNum, permission:MapPermission) -> bool{
+    TASK_MANAGER.map(start, end, permission)
+}
+
+pub fn unmap(start:VirtPageNum, end:VirtPageNum) -> bool{
+    TASK_MANAGER.unmap(start, end)
 }
