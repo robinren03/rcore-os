@@ -9,3 +9,4 @@ target/
 # sub repo
 ci-user/
 conf/
+rust-os-camp-2022-conf/
