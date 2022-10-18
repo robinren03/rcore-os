@@ -1,7 +1,7 @@
 //! Process management syscalls
 
 use crate::config::MAX_SYSCALL_NUM;
-use crate::mm::{VirtAddr, MapPermission, VirtPageNum, get_easy_ptr_from_token};
+use crate::mm::{VirtAddr, MapPermission, get_easy_ptr_from_token};
 use crate::task::{exit_current_and_run_next, suspend_current_and_run_next, TaskStatus, map, unmap, current_user_token, get_syscall_times, get_first_time};
 use crate::timer::get_time_us;
 
