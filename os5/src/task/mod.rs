@@ -18,6 +18,8 @@ mod switch;
 mod task;
 
 use crate::loader::get_app_data_by_name;
+use crate::config::MAX_SYSCALL_NUM;
+use crate::mm::{VirtPageNum, MapPermission};
 use alloc::sync::Arc;
 use lazy_static::*;
 use manager::fetch_task;
@@ -97,3 +99,42 @@ lazy_static! {
 pub fn add_initproc() {
     add_task(INITPROC.clone());
 }
+
+pub fn update_cur_task(syscall_id : usize) {
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    inner.syscall_times[syscall_id] += 1;
+}
+
+pub fn get_syscall_times() -> [u32; MAX_SYSCALL_NUM] {
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    inner.syscall_times
+}
+
+pub fn get_first_time() -> usize {
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    inner.first_time
+}
+
+pub fn map(start:VirtPageNum, end:VirtPageNum, permission:MapPermission) -> bool{
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    if inner.memory_set.check_before_map(start, end) {
+        return inner.memory_set.seq_mem_map(start, end, permission);
+    }
+    false
+
+}
+
+pub fn unmap(start:VirtPageNum, end:VirtPageNum) -> bool{
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    if inner.memory_set.check_before_unmap(start, end) {
+        inner.memory_set.seq_mem_unmap(start, end);
+        return true;
+    }
+    false
+}
+
