@@ -40,7 +40,7 @@ struct Pass(u64);
 // 若两数之差的绝对值大于 BigStride/2，说明发生了溢出，真实的大小关系应该和现在的大小关系相反 
 impl PartialOrd for Pass {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let half_big_stride= 122;
+        let half_big_stride= 127;
         if self.0 < other.0 {
             if other.0-self.0<=a {
                 return Some(Ordering::Less);
