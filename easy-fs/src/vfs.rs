@@ -248,9 +248,9 @@ impl Inode {
     }
 
     pub fn unlink_at(&self, name: &str) -> isize {
-        let mut count=0;
-        let mut idx=0;
-        let mut id=-1;
+        let mut count = 0;
+        let mut idx = 0;
+        let mut id = -1;
         self.read_disk_inode(|disk_inode| {
             let file_count = (disk_inode.size as usize) / DIRENT_SZ;
             for i in 0..file_count {
@@ -270,6 +270,8 @@ impl Inode {
                 }
             }
         });
+
+        if (id == -1) return -1;
 
         self.read_disk_inode(|disk_inode| {
             let file_count = (disk_inode.size as usize) / DIRENT_SZ;
@@ -305,7 +307,7 @@ impl Inode {
             node.clear();
         }
         
-        self.modify_disk_inode(|root_inode| { // clear the dirent of id
+        self.modify_disk_inode(|root_inode| {
             let dirent=DirEntry::empty();
             root_inode.write_at( 
                 idx * DIRENT_SZ,
