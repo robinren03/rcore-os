@@ -105,5 +105,5 @@ pub fn sys_linkat(_old_name: *const u8, _new_name: *const u8) -> isize {
 
 pub fn sys_unlinkat(_name: *const u8) -> isize {
     let current_token=current_user_token();
-    unlink_at(translated_str(current_token,_name).as_str());
+    unlink_at(translated_str(current_token,_name).as_str())
 }

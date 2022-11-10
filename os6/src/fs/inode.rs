@@ -146,7 +146,7 @@ pub fn link_at(old: &str, new: &str) -> isize{
 }
 
 pub fn unlink_at(name: &str) -> isize{
-    ROOT_INODE.my_unlinkat(name)
+    ROOT_INODE.unlink_at(name)
 }
 
 impl File for OSInode {
@@ -182,14 +182,14 @@ impl File for OSInode {
         let mut inner=self.inner.exclusive_access();
         let flag=inner.inode.as_ref().judge_inode();
         if  flag{
-            *ptr.mode =StatMode::DIR;
+            ptr.mode =StatMode::DIR;
         }
         else {
-            *ptr.mode =StatMode::FILE;
+            ptr.mode =StatMode::FILE;
         }
-        *ptr.dev = 0;
-        *ptr.ino = inner.inode.as_ref().get_ino_id() as u64;
-        *ptr.pad = [0u64; 7];
-        *ptr.nlink = ROOT_INODE.get_num_link(ptr.ino as u32);
+        ptr.dev = 0;
+        ptr.ino = inner.inode.as_ref().get_ino_id() as u64;
+        ptr.pad = [0u64; 7];
+        ptr.nlink = ROOT_INODE.get_num_link(ptr.ino as u32);
     }
 }

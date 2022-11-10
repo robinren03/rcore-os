@@ -293,12 +293,9 @@ impl Inode {
         if count==1 {
             let mut _offset=0;
             let mut _id=0;
-            {
-                let fs=self.fs.lock();
-                (_id,_offset) = fs.get_disk_inode_pos(id as u32);
-            }
-            // let fs=self.fs.lock();
-            // let (_id,_offset) = fs.get_disk_inode_pos(id as u32);
+            let fs=self.fs.lock();
+            (_id,_offset) = fs.get_disk_inode_pos(id as u32);
+            drop(fs);
             let node=Arc::new(Self::new(
                 _id,
                 _offset,
@@ -346,5 +343,12 @@ impl Inode {
             }
         });
         num_link
+    }
+
+    pub fn judge_inode(&self)->bool{
+        let result=self.read_disk_inode(|disk_node| {
+            return disk_node.type_ == DiskInodeType::Directory;
+        });
+        return result;
     }
 }
