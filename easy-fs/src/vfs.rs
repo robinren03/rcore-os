@@ -271,7 +271,9 @@ impl Inode {
             }
         });
 
-        if (id == -1) return -1;
+        if id == -1  {
+            return -1;
+        }
 
         self.read_disk_inode(|disk_inode| {
             let file_count = (disk_inode.size as usize) / DIRENT_SZ;
