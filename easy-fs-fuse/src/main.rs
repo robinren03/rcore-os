@@ -55,11 +55,11 @@ fn easy_fs_pack() -> std::io::Result<()> {
             .write(true)
             .create(true)
             .open(output_path)?;
-        f.set_len(14000 * 512).unwrap();
+        f.set_len(16384 * 512).unwrap();
         f
     })));
     // 4MiB, at most 4095 files
-    let efs = EasyFileSystem::create(block_file.clone(), 14000, 1);
+    let efs = EasyFileSystem::create(block_file.clone(), 16384, 1);
     let root_inode = Arc::new(EasyFileSystem::root_inode(&efs));
     for dir_entry in read_dir(src_path).unwrap() {
         let dir_entry = dir_entry.unwrap();
