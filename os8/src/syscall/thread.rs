@@ -18,7 +18,7 @@ pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
             .ustack_base,
         true,
     ));
-    let new_task_inner = new_task.inner_exclusive_access();
+    let mut new_task_inner = new_task.inner_exclusive_access();
     let new_task_res = new_task_inner.res.as_ref().unwrap();
     let new_task_tid = new_task_res.tid;
     let new_task_trap_cx = new_task_inner.get_trap_cx();
@@ -30,7 +30,21 @@ pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
         trap_handler as usize,
     );
     (*new_task_trap_cx).x[10] = arg;
+    let task_inner =  task.inner_exclusive_access();
+    for _i in 0..task_inner.mutex_alloc.len() {
+        new_task_inner.mutex_alloc.push(0);
+    }
+    for _i in 0..task_inner.mutex_need.len() {
+        new_task_inner.mutex_need.push(0);
+    }
+    for _i in 0..task_inner.sem_alloc.len() {
+        new_task_inner.sem_alloc.push(0);
+    }
+    for _i in 0..task_inner.sem_need.len() {
+        new_task_inner.sem_need.push(0);
+    }
 
+    drop(task_inner);
     let mut process_inner = process.inner_exclusive_access();
     // add new thread to current process
     let tasks = &mut process_inner.tasks;
