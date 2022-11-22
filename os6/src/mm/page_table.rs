@@ -5,6 +5,7 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
+use crate::config::PAGE_SIZE;
 
 bitflags! {
     /// page table entry flags
@@ -165,6 +166,15 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
         start = end_va.into();
     }
     v
+}
+
+pub fn get_easy_ptr_from_token<T>(token: usize, ptr: *const u8) -> &'static mut T {
+    let page_table = PageTable::from_token(token);
+    let va = VirtAddr::from(ptr as usize);
+    let vpn = va.floor();
+    let ppn = page_table.translate(vpn).unwrap().ppn();
+    let pa: usize = (ppn.0 * PAGE_SIZE) | va.page_offset();
+    unsafe { (pa as *mut T).as_mut().unwrap() }
 }
 
 pub fn translated_str(token: usize, ptr: *const u8) -> String {

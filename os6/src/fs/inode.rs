@@ -8,8 +8,10 @@ use alloc::sync::Arc;
 use lazy_static::*;
 use bitflags::*;
 use alloc::vec::Vec;
-use super::File;
+use super::{File, Stat, StatMode};
 use crate::mm::UserBuffer;
+use crate::mm::translated_refmut;
+use crate::task::current_user_token;
 
 /// A wrapper around a filesystem inode
 /// to implement File trait atop
@@ -139,6 +141,14 @@ pub fn open_file(name: &str, flags: OpenFlags) -> Option<Arc<OSInode>> {
     }
 }
 
+pub fn link_at(old: &str, new: &str) -> isize{
+    ROOT_INODE.link_at(old, new)
+}
+
+pub fn unlink_at(name: &str) -> isize{
+    ROOT_INODE.unlink_at(name)
+}
+
 impl File for OSInode {
     fn readable(&self) -> bool { self.readable }
     fn writable(&self) -> bool { self.writable }
@@ -165,5 +175,21 @@ impl File for OSInode {
             total_write_size += write_size;
         }
         total_write_size
+    }
+
+    fn get_my_state(&self,buf: *mut Stat){
+        let ptr = translated_refmut(current_user_token(), buf);
+        let mut inner=self.inner.exclusive_access();
+        let flag=inner.inode.as_ref().judge_inode();
+        if  flag{
+            ptr.mode =StatMode::DIR;
+        }
+        else {
+            ptr.mode =StatMode::FILE;
+        }
+        ptr.dev = 0;
+        ptr.ino = inner.inode.as_ref().get_ino_id() as u64;
+        ptr.pad = [0u64; 7];
+        ptr.nlink = ROOT_INODE.get_num_link(ptr.ino as u32);
     }
 }
