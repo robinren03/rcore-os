@@ -6,6 +6,7 @@ use crate::trap::TrapContext;
 use crate::{mm::PhysPageNum, sync::UPSafeCell};
 use alloc::sync::{Arc, Weak};
 use core::cell::RefMut;
+use alloc::vec::Vec;
 
 /// Task control block structure
 ///
@@ -34,6 +35,10 @@ pub struct TaskControlBlockInner {
     pub exit_code: Option<i32>,
     /// Tid and ustack will be deallocated when this goes None
     pub res: Option<TaskUserRes>,
+    pub mutex_alloc:Vec<usize>,
+    pub mutex_need:Vec<usize>,
+    pub sem_alloc:Vec<usize>,
+    pub sem_need:Vec<usize>
 }
 
 /// Simple access to its internal fields
@@ -73,6 +78,10 @@ impl TaskControlBlock {
                     task_cx: TaskContext::goto_trap_return(kstack_top),
                     task_status: TaskStatus::Ready,
                     exit_code: None,
+                    mutex_need: Vec::new(),
+                    mutex_alloc: Vec::new(),
+                    sem_alloc: Vec::new(),
+                    sem_need: Vec::new(),
                 })
             },
         }
@@ -124,6 +133,10 @@ impl TaskControlBlock {
                     task_cx: context,
                     task_status: TaskStatus::Ready,
                     exit_code: None,
+                    mutex_need: Vec::new(),
+                    mutex_alloc: Vec::new(),
+                    sem_alloc: Vec::new(),
+                    sem_need: Vec::new(),
                 })
             },
         }
