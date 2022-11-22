@@ -8,6 +8,7 @@ use crate::task::current_task;
 use crate::fs::open_file;
 use crate::fs::OpenFlags;
 use crate::fs::Stat;
+use crate::fs::{link_at, unlink_at};
 use crate::mm::UserBuffer;
 use alloc::sync::Arc;
 
@@ -81,13 +82,28 @@ pub fn sys_close(fd: usize) -> isize {
 
 // YOUR JOB: 扩展 easy-fs 和内核以实现以下三个 syscall
 pub fn sys_fstat(_fd: usize, _st: *mut Stat) -> isize {
-   -1
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    if inner.fd_table.len()<=_fd{
+        return -1;
+    }
+    if let Some(f)=&inner.fd_table[_fd]{
+        let f=f.clone();
+        drop(inner);
+        f.get_my_state(_st);
+        return 0;
+    }
+    -1
 }
 
 pub fn sys_linkat(_old_name: *const u8, _new_name: *const u8) -> isize {
-    -1
+    let current_token = current_user_token();
+    let new = translated_str(current_token, _new_name);
+    let old = translated_str(current_token, _old_name);
+    link_at(old.as_str(), new.as_str())
 }
 
 pub fn sys_unlinkat(_name: *const u8) -> isize {
-    -1
+    let current_token=current_user_token();
+    unlink_at(translated_str(current_token,_name).as_str())
 }

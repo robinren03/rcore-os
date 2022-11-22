@@ -208,4 +208,151 @@ impl Inode {
         });
         block_cache_sync_all();
     }
+
+    pub fn link_at(&self, old: &str, new: &str) -> isize {
+        if old == new  {
+            return -1;
+        }
+        let mut old_id=-1;
+        self.read_disk_inode(|disk_inode| {
+            let file_count=(disk_inode.size as usize)/DIRENT_SZ;
+            for i in 0..file_count {
+                let mut dirent = DirEntry::empty();
+                assert_eq!(
+                    disk_inode.read_at(
+                        i * DIRENT_SZ,
+                        dirent.as_bytes_mut(),
+                        &self.block_device,
+                    ),
+                    DIRENT_SZ,
+                );
+                if dirent.name()==old{
+                    old_id=dirent.inode_number() as isize;
+                }
+            }
+        });
+
+        let mut fs=self.fs.lock();
+        self.modify_disk_inode(|disk_inode|{
+            let file_count = (disk_inode.size as usize) / DIRENT_SZ;
+            let new_size = (file_count + 1) * DIRENT_SZ;
+            self.increase_size(new_size as u32, disk_inode, &mut fs);
+            let dirent = DirEntry::new(new, old_id as u32);
+            disk_inode.write_at(
+                file_count * DIRENT_SZ,
+                dirent.as_bytes(),
+                &self.block_device,
+            );
+        });
+        0
+    }
+
+    pub fn unlink_at(&self, name: &str) -> isize {
+        let mut count = 0;
+        let mut idx = 0;
+        let mut id = -1;
+        self.read_disk_inode(|disk_inode| {
+            let file_count = (disk_inode.size as usize) / DIRENT_SZ;
+            for i in 0..file_count {
+                let mut dirent = DirEntry::empty();
+                assert_eq!(
+                    disk_inode.read_at(
+                        i * DIRENT_SZ,
+                        dirent.as_bytes_mut(),
+                        &self.block_device,
+                    ),
+                    DIRENT_SZ,
+                );
+                if dirent.name() == name {
+                    id = dirent.inode_number() as isize;
+                    idx = i;
+                    break;
+                }
+            }
+        });
+
+        if id == -1  {
+            return -1;
+        }
+
+        self.read_disk_inode(|disk_inode| {
+            let file_count = (disk_inode.size as usize) / DIRENT_SZ;
+            for i in 0..file_count {
+                let mut dirent = DirEntry::empty();
+                assert_eq!(
+                    disk_inode.read_at(
+                        i * DIRENT_SZ,
+                        dirent.as_bytes_mut(),
+                        &self.block_device,
+                    ),
+                    DIRENT_SZ,
+                );
+                if dirent.inode_number() == id as u32 {
+                    count += 1;
+                }
+            }
+        });
+
+
+        if count==1 {
+            let mut _offset=0;
+            let mut _id=0;
+            let fs=self.fs.lock();
+            (_id,_offset) = fs.get_disk_inode_pos(id as u32);
+            drop(fs);
+            let node=Arc::new(Self::new(
+                _id,
+                _offset,
+                self.fs.clone(),
+                self.block_device.clone(),
+            ));
+            node.clear();
+        }
+        
+        self.modify_disk_inode(|root_inode| {
+            let dirent=DirEntry::empty();
+            root_inode.write_at( 
+                idx * DIRENT_SZ,
+                dirent.as_bytes(),
+                &self.block_device,
+            );
+        });
+
+        0
+    }
+
+    pub fn get_ino_id(&self)->usize{
+        let id=self.block_id;
+        let result=self.fs.lock().get_id(id,self.block_offset);
+        return result;
+    }
+
+    pub fn get_num_link(&self,node_id:u32)->u32{
+        let mut num_link=0;
+        self.read_disk_inode(|disk_inode|{
+            let file_count=(disk_inode.size as usize)/DIRENT_SZ;
+            for i in 0..file_count{
+                let mut dirent = DirEntry::empty();
+                assert_eq!(
+                    disk_inode.read_at(
+                        DIRENT_SZ * i,
+                        dirent.as_bytes_mut(),
+                        &self.block_device,
+                    ),
+                    DIRENT_SZ,
+                );
+                if dirent.inode_number()==node_id{
+                    num_link += 1;
+                }
+            }
+        });
+        num_link
+    }
+
+    pub fn judge_inode(&self)->bool{
+        let result=self.read_disk_inode(|disk_node| {
+            return disk_node.type_ == DiskInodeType::Directory;
+        });
+        return result;
+    }
 }
